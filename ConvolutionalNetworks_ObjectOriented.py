@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Sat Jan  5 00:14:08 2019
-
 @author: amine bahlouli
 """
+
+
+
 
 import tensorflow as tf
 from sklearn.utils import shuffle
@@ -60,7 +63,7 @@ class HiddenLayer:
         self.params = [self.W,self.b]
     def forward(self,x):
         return tf.nn.relu(tf.matmul(x,self.W)+self.b)
-class ConPoolLayer:
+class ConvPoolLayer:
     def __init__(self,mi,mo,fw=5,fh=5,poolsz=(2,2)):
         sz= (fw,fh,mi,mo)
         W0 = init_filter(sz)
@@ -74,3 +77,38 @@ class ConPoolLayer:
         convout = tf.nn.bias_add(convout,self.b)
         pool_out = tf.nn.max_pool(convout, ksize=[1,2,2,1], strides=[1,2,2,1],padding="SAME")
         return tf.tanh(pool_out)
+class CNN:
+    def __init__(convpool_layer_size,hiden_layer_size):
+        self.convpool_layer_size=convpool_layer_size
+        self.hidden_layer_size=hidden_layer_size
+    def fit(self, X,Y,lr=10e-4,mu=0.99,reg=10e-4,decay=0.9999,eps=10e-3,batch_sz=30,epochs=3,show_fig=True):
+        lr = np.float32(lr)
+        mu = np.np.float32(mu)
+        reg = np.float32(reg)
+        decay = np.float32(decay)
+        eps = np.float32(eps)
+        K = len(set(Y))
+        X,Y = shuffle(X,Y)
+        X = np.astype(np.float32)
+        Y = y2indicator(Y).astype(np.float32)
+        xValid, yValid = X[-1000:],Y[-1000:]
+        X,Y = X[:-1000,],Y[:-1000,]
+        yValid_flat= np.argmax(yValid,axis=1)
+        N,d,d,c = X.shape
+        mi=c
+        outW=d
+        outH=d
+        self.convpool_layer=[]
+        for mo,fw,fh in self.convpool_layer_size:
+            layer = convPoolLayer(mi,mo,fw,fh)
+            self.convpool_layer.append(layer)
+            outW=outW/2
+            outH = outH/2
+            mi=mo
+        self.hidden_layer=[]
+        M1 = self.convpool_layer_size[-1][0]*outW*outH
+        for M2 in self.hidden_layer_size:
+            h = HiddenLayer(M1,M2,count)
+            self.hidden_layer.append(h)
+            M1=M2
+            count+=1
